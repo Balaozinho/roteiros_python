@@ -1,77 +1,68 @@
-# Text-to-Speech com Python e OpenAI API
+# Automação Web com Python e Selenium
 
 ## Objetivo
 
-Este vídeo ensina como transformar texto em áudio narrado usando a API da OpenAI com Python. Em menos de 10 linhas de código, é possível gerar um arquivo MP3 de alta qualidade a partir de qualquer string de texto, escolhendo entre diferentes vozes disponíveis na plataforma. O resultado é um arquivo de áudio pronto para uso em projetos de IA, automações e conteúdo.
+Este vídeo ensina como automatizar ações em um navegador usando Python com a biblioteca Selenium. Com menos de 15 linhas de código, é possível abrir o Chrome programaticamente, navegar até um site, localizar elementos na página e interagir com eles — abrindo as portas para scraping, testes automatizados e bots de preenchimento de formulários.
 
 ## Conceitos Abordados
 
-- Autenticação com a OpenAI API usando variáveis de ambiente (`.env` + `python-dotenv`)
-- Instanciação do cliente OpenAI (`openai.Client`)
-- Uso do endpoint `audio.speech.create` para síntese de voz
-- Parâmetros de configuração: modelo TTS, voz e texto de entrada
-- Salvamento do áudio gerado em arquivo MP3 com `write_to_file`
+- Instalação e importação do Selenium (`webdriver`, `By`)
+- Inicialização do Chrome via `webdriver.Chrome()`
+- Navegação para URLs com `driver.get()`
+- Localização de elementos HTML com `find_element(By.NAME, ...)`
+- Interação com campos de texto via `send_keys()`
+- Encerramento controlado do navegador com `driver.quit()`
+- Uso de `input()` para pausar a execução e inspecionar o navegador antes de fechar
 
 ## Pré-requisitos Sugeridos
 
 - Python 3.8 ou superior instalado
-- Conta na OpenAI com chave de API (`OPENAI_API_KEY`)
-- Familiaridade com Jupyter Notebooks
-- Conhecimento básico de variáveis e funções em Python
-- Pacotes instalados: `openai`, `python-dotenv`
+- Biblioteca Selenium instalada: `pip install selenium`
+- Google Chrome instalado na máquina
+- ChromeDriver compatível com a versão do Chrome (ou usar `selenium-manager`, incluído no Selenium 4.6+)
+- Conhecimento básico de HTML (o que são atributos `name`, `id`, `class`)
 
 ## Estrutura do Código — Passo a Passo
 
-### Passo 1: Importar bibliotecas e carregar variáveis de ambiente
+### Passo 1: Importar as dependências
 
 ```python
-import openai
-from dotenv import load_dotenv, find_dotenv
-
-_ = load_dotenv(find_dotenv())
+from selenium import webdriver
+from selenium.webdriver.common.by import By
 ```
 
-A biblioteca `python-dotenv` localiza automaticamente o arquivo `.env` no diretório do projeto e carrega as variáveis definidas nele como variáveis de ambiente do sistema. Assim, a `OPENAI_API_KEY` fica disponível sem precisar ser exposta diretamente no código.
+`webdriver` fornece a interface para controlar o navegador. `By` é uma classe de constantes que define as estratégias de localização de elementos: `By.NAME`, `By.ID`, `By.XPATH`, `By.CSS_SELECTOR`, entre outras.
 
-### Passo 2: Instanciar o cliente OpenAI
+### Passo 2: Inicializar o Chrome e navegar para o site
 
 ```python
-client = openai.Client()
+driver = webdriver.Chrome()
+driver.get("https://www.google.com")
 ```
 
-O cliente lê automaticamente a variável de ambiente `OPENAI_API_KEY` carregada no passo anterior. Toda comunicação com a API da OpenAI é feita através deste objeto.
+`webdriver.Chrome()` abre uma janela real do Chrome sob controle do Selenium. A partir do Selenium 4.6, o ChromeDriver é baixado automaticamente pelo `selenium-manager` — não é necessário configurá-lo manualmente. `driver.get()` carrega a URL e aguarda o carregamento completo da página.
 
-> **Nota:** A versão atual da SDK usa `openai.OpenAI()` (com letra maiúscula). Ambas funcionam, mas `openai.OpenAI()` é a forma recomendada nas versões mais recentes.
-
-### Passo 3: Definir o arquivo de saída e o texto a narrar
+### Passo 3: Localizar o campo de pesquisa
 
 ```python
-arquivo = 'gali_audio.mp3'
-texto = 'Python é mais legal'
+campo_pesquisa = driver.find_element(By.NAME, "q")
 ```
 
-Define o nome do arquivo MP3 que será salvo localmente e o texto que será convertido em fala. O texto pode ter qualquer tamanho — a API fragmenta internamente textos longos.
+`find_element` retorna o primeiro elemento HTML que corresponde ao seletor informado. `By.NAME` busca pelo atributo `name` da tag — no Google, o campo de busca tem `name="q"`. O resultado é um objeto `WebElement`, que representa o elemento no DOM.
 
-### Passo 4: Configurar e executar a síntese de voz
+### Passo 4: Digitar texto no campo
 
 ```python
-resposta = client.audio.speech.create(
-    model='tts-1',
-    voice='echo',
-    input=texto,
-)
+campo_pesquisa.send_keys("Python Selenium")
 ```
 
-- `model='tts-1'`: modelo padrão de TTS da OpenAI (rápido e econômico). Use `tts-1-hd` para maior qualidade de áudio.
-- `voice='echo'`: uma das 6 vozes disponíveis. Outras opções: `alloy`, `fable`, `onyx`, `nova`, `shimmer`.
-- `input=texto`: o texto a ser narrado.
+`send_keys()` simula a digitação caractere por caractere, exatamente como um usuário faria no teclado. Pode receber qualquer string, incluindo teclas especiais como `Keys.ENTER` ou `Keys.TAB` (importadas de `selenium.webdriver.common.keys`).
 
-A chamada à API é síncrona — o código aguarda a resposta completa antes de continuar.
-
-### Passo 5: Salvar o arquivo de áudio
+### Passo 5: Pausar e fechar o navegador
 
 ```python
-resposta.write_to_file(arquivo)
+input("Pressione ENTER para fechar o navegador...")
+driver.quit()
 ```
 
-Escreve o conteúdo binário do MP3 no caminho especificado. O arquivo é salvo no diretório de trabalho atual. Após a execução, o áudio está pronto para reprodução.
+`input()` congela a execução do script e permite inspecionar visualmente o navegador antes de encerrar. `driver.quit()` fecha o Chrome e encerra o processo do ChromeDriver — sempre prefira `quit()` a `close()` para liberar todos os recursos corretamente.
